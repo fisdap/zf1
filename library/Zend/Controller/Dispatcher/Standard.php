@@ -19,6 +19,8 @@
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
+use Illuminate\Container\Container;
+
 
 /** Zend_Loader */
 require_once 'Zend/Loader.php';
@@ -54,16 +56,42 @@ class Zend_Controller_Dispatcher_Standard extends Zend_Controller_Dispatcher_Abs
     protected $_controllerDirectory = array();
 
     /**
+     * @var Container
+     */
+    protected $container;
+
+
+    /**
      * Constructor: Set current module to default value
      *
-     * @param  array $params
-     * @return void
+     * @param Container $container
+     * @param  array    $params
      */
-    public function __construct(array $params = array())
+    public function __construct(Container $container, array $params = array())
     {
+        $this->container = $container;
         parent::__construct($params);
         $this->_curModule = $this->getDefaultModule();
     }
+
+
+    /**
+     * @return Container
+     */
+    public function getContainer()
+    {
+        return $this->container;
+    }
+
+
+    /**
+     * @param Container $container
+     */
+    public function setContainer($container)
+    {
+        $this->container = $container;
+    }
+
 
     /**
      * Add a single path to the controller directory stack
@@ -85,11 +113,15 @@ class Zend_Controller_Dispatcher_Standard extends Zend_Controller_Dispatcher_Abs
         return $this;
     }
 
+
     /**
      * Set controller directory
      *
      * @param array|string $directory
+     * @param null         $module
+     *
      * @return Zend_Controller_Dispatcher_Standard
+     * @throws Zend_Controller_Exception
      */
     public function setControllerDirectory($directory, $module = null)
     {
@@ -196,7 +228,7 @@ class Zend_Controller_Dispatcher_Standard extends Zend_Controller_Dispatcher_Abs
      * if a given controller does not exist. This method returning false does
      * not necessarily indicate the dispatcher will not still dispatch the call.
      *
-     * @param Zend_Controller_Request_Abstract $action
+     * @param Zend_Controller_Request_Abstract $request
      * @return boolean
      */
     public function isDispatchable(Zend_Controller_Request_Abstract $request)
@@ -222,32 +254,89 @@ class Zend_Controller_Dispatcher_Standard extends Zend_Controller_Dispatcher_Abs
         return Zend_Loader::isReadable($test);
     }
 
+
     /**
-     * Dispatch to a controller/action
-     *
-     * By default, if a controller is not dispatchable, dispatch() will throw
-     * an exception. If you wish to use the default controller instead, set the
-     * param 'useDefaultControllerAlways' via {@link setParam()}.
-     *
-     * @param Zend_Controller_Request_Abstract $request
+     * @param Zend_Controller_Request_Abstract  $request
      * @param Zend_Controller_Response_Abstract $response
-     * @return void
+     *
+     * @throws \Exception
      * @throws Zend_Controller_Dispatcher_Exception
+     * @throws \Zend_Controller_Exception
+     *
+     * @see inspired by https://github.com/jeroenvandergeer/zf-ioc
      */
     public function dispatch(Zend_Controller_Request_Abstract $request, Zend_Controller_Response_Abstract $response)
     {
         $this->setResponse($response);
 
-        /**
-         * Get controller class
-         */
+        $controller = $this->getController($request);
+        $action = $this->getActionMethod($request);
+        $request->setDispatched(true);
+        $obLevel = ob_get_level();
+
+        if (!$this->outputBufferingIsDisabled()) {
+            ob_start();
+        }
+
+        try {
+            $this->dispatchToController($controller, $action);
+        } catch (\Exception $e) {
+            $this->cleanOutputBufferToLevel($obLevel);
+            throw $e;
+        }
+
+        if (!$this->outputBufferingIsDisabled()) {
+            $content = ob_get_clean();
+            $response->appendBody($content);
+        }
+        // Destroy the page controller instance and reflection objects
+        $controller = null;
+    }
+
+
+    /**
+     * @param $controller
+     * @param $action
+     */
+    protected function dispatchToController(Zend_Controller_Action $controller, $action)
+    {
+        $helperBroker = new Zend_Controller_Action_HelperBroker($controller);
+        $helperBroker->notifyPreDispatch();
+        $controller->preDispatch();
+        if ($controller->getRequest()->isDispatched()) {
+            if (!isset($classMethods) || null === $classMethods) {
+                $classMethods = get_class_methods($controller);
+            }
+            if (!($this->getResponse()->isRedirect())) {
+                if (in_array($action, $classMethods)) {
+                    $this->call($controller, $action);
+                } else {
+                    $this->call($controller, '_call', array($action));
+                }
+            }
+            $controller->postDispatch();
+        }
+        $helperBroker->notifyPostDispatch();
+    }
+
+
+    /**
+     * @param Zend_Controller_Request_Abstract $request
+     *
+     * @return false|string
+     * @throws Zend_Controller_Dispatcher_Exception
+     * @throws \Zend_Controller_Exception
+     */
+    protected function getClassName(Zend_Controller_Request_Abstract $request)
+    {
         if (!$this->isDispatchable($request)) {
             $controller = $request->getControllerName();
             if (!$this->getParam('useDefaultControllerAlways') && !empty($controller)) {
                 require_once 'Zend/Controller/Dispatcher/Exception.php';
-                throw new Zend_Controller_Dispatcher_Exception('Invalid controller specified (' . $request->getControllerName() . ')');
+                throw new Zend_Controller_Dispatcher_Exception(
+                    'Invalid controller specified ('.$request->getControllerName().')'
+                );
             }
-
             $className = $this->getDefaultControllerClass($request);
         } else {
             $className = $this->getControllerClass($request);
@@ -256,76 +345,108 @@ class Zend_Controller_Dispatcher_Standard extends Zend_Controller_Dispatcher_Abs
             }
         }
 
-        /**
-         * If we're in a module or prefixDefaultModule is on, we must add the module name
-         * prefix to the contents of $className, as getControllerClass does not do that automatically.
-         * We must keep a separate variable because modules are not strictly PSR-0: We need the no-module-prefix
-         * class name to do the class->file mapping, but the full class name to insantiate the controller
-         */
+        return $className;
+    }
+
+
+    /**
+     * @param $className
+     *
+     * @return string
+     */
+    protected function getModuleClassName($className)
+    {
         $moduleClassName = $className;
         if (($this->_defaultModule != $this->_curModule)
-            || $this->getParam('prefixDefaultModule'))
-        {
+            || $this->getParam('prefixDefaultModule')
+        ) {
             $moduleClassName = $this->formatClassName($this->_curModule, $className);
+            return $moduleClassName;
         }
 
-        /**
-         * Load the controller class file
-         */
-        $className = $this->loadClass($className);
+        return $moduleClassName;
+    }
 
-        /**
-         * Instantiate controller with request, response, and invocation
-         * arguments; throw exception if it's not an action controller
-         */
-        $controller = new $moduleClassName($request, $this->getResponse(), $this->getParams());
+
+    /**
+     * @param Zend_Controller_Request_Abstract $request
+     *
+     * @return mixed
+     */
+    protected function getController(Zend_Controller_Request_Abstract $request)
+    {
+        $className = $this->getClassName($request);
+        $this->loadClass($className);
+        $moduleClassName = $this->getModuleClassName($className);
+
+        /** @var Zend_Controller_Action $controller */
+        $controller = $this->getContainer()->make($moduleClassName);
+
+        $this->assertControllerIsValid($controller);
+
+        $controller->setRequest($request)
+            ->setResponse($this->getResponse())
+            ->setInvokeArgs($this->getParams())
+            ->initHelperBroker()
+            ->init();
+
+        return $controller;
+    }
+
+
+    /**
+     * @param $controller
+     *
+     * @throws Zend_Controller_Dispatcher_Exception
+     */
+    protected function assertControllerIsValid($controller)
+    {
         if (!($controller instanceof Zend_Controller_Action_Interface) &&
-            !($controller instanceof Zend_Controller_Action)) {
+            !($controller instanceof Zend_Controller_Action)
+        ) {
             require_once 'Zend/Controller/Dispatcher/Exception.php';
             throw new Zend_Controller_Dispatcher_Exception(
-                'Controller "' . $moduleClassName . '" is not an instance of Zend_Controller_Action_Interface'
+                'Controller "'.get_class($controller).'" is not an instance of Zend_Controller_Action_Interface'
             );
         }
-
-        /**
-         * Retrieve the action name
-         */
-        $action = $this->getActionMethod($request);
-
-        /**
-         * Dispatch the method call
-         */
-        $request->setDispatched(true);
-
-        // by default, buffer output
-        $disableOb = $this->getParam('disableOutputBuffering');
-        $obLevel   = ob_get_level();
-        if (empty($disableOb)) {
-            ob_start();
-        }
-
-        try {
-            $controller->dispatch($action);
-        } catch (Exception $e) {
-            // Clean output buffer on error
-            $curObLevel = ob_get_level();
-            if ($curObLevel > $obLevel) {
-                do {
-                    ob_get_clean();
-                    $curObLevel = ob_get_level();
-                } while ($curObLevel > $obLevel);
-            }
-            throw $e;
-        }
-
-        if (empty($disableOb)) {
-            $content = ob_get_clean();
-            $response->appendBody($content);
-        }
-
-        // Destroy the page controller instance and reflection objects
-        $controller = null;
     }
+
+
+    /**
+     * @param \Zend_Controller_Action $controller
+     * @param                         $action
+     * @param array                   $params
+     */
+    protected function call(Zend_Controller_Action $controller, $action, $params = array())
+    {
+        $this->getContainer()->call(array($controller, $action), $params);
+    }
+
+
+    /**
+     * @param $obLevel
+     */
+    protected function cleanOutputBufferToLevel($obLevel)
+    {
+        $curObLevel = ob_get_level();
+        if ($curObLevel > $obLevel) {
+            do {
+                ob_get_clean();
+                $curObLevel = ob_get_level();
+            } while ($curObLevel > $obLevel);
+        }
+    }
+
+
+    /**
+     * @return mixed
+     */
+    protected function outputBufferingIsDisabled()
+    {
+        $disableOb = $this->getParam('disableOutputBuffering');
+        return !empty($disableOb);
+    }
+
 
     /**
      * Load a controller class
@@ -368,6 +489,7 @@ class Zend_Controller_Dispatcher_Standard extends Zend_Controller_Dispatcher_Abs
         return $finalClass;
     }
 
+
     /**
      * Get controller class name
      *
@@ -375,7 +497,9 @@ class Zend_Controller_Dispatcher_Standard extends Zend_Controller_Dispatcher_Abs
      * if still not found, fallback to default
      *
      * @param Zend_Controller_Request_Abstract $request
-     * @return string|false Returns class name on success
+     *
+     * @return false|string Returns class name on success
+     * @throws Zend_Controller_Exception
      */
     public function getControllerClass(Zend_Controller_Request_Abstract $request)
     {

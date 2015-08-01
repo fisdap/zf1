@@ -1,15 +1,15 @@
 {
     "name": "zendframework/zendframework1",
-    "description": "Zend Framework 1",
+    "description": "Bend Framework 1",
     "type": "library",
     "keywords": [
         "framework",
         "zf1"
     ],
-    "homepage": "http://framework.zend.com/",
     "license": "BSD-3-Clause",
     "require": {
-        "php": ">=5.2.4"
+        "php": ">=5.4",
+        "illuminate/container": "~5"
     },
     "autoload": {
         "psr-0": {

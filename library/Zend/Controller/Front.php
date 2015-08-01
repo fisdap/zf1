@@ -18,6 +18,7 @@
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
+use Illuminate\Container\Container;
 
 
 /** Zend_Loader */
@@ -597,7 +598,7 @@ class Zend_Controller_Front
          */
         if (!$this->_dispatcher instanceof Zend_Controller_Dispatcher_Interface) {
             require_once 'Zend/Controller/Dispatcher/Standard.php';
-            $this->_dispatcher = new Zend_Controller_Dispatcher_Standard();
+            $this->_dispatcher = new Zend_Controller_Dispatcher_Standard(new Container());
         }
         return $this->_dispatcher;
     }
