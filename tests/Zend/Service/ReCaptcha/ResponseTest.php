@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Service_ReCaptcha
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -27,7 +27,7 @@ require_once 'Zend/Service/ReCaptcha/Response.php';
  * @category   Zend
  * @package    Zend_Service_ReCaptcha
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Service
  * @group      Zend_Service_ReCaptcha
@@ -66,10 +66,32 @@ class Zend_Service_ReCaptcha_ResponseTest extends PHPUnit_Framework_TestCase
         $this->assertSame(false, $this->_response->isValid());
     }
 
+    public function testSetFromHttpResponseWhenResponseContentIsMissing() {
+        $responseBody = 'true';
+        $httpResponse = new Zend_Http_Response(200, array('Content-Type' => 'text/html'), $responseBody);
+
+        $this->_response->setFromHttpResponse($httpResponse);
+
+        $this->assertTrue($this->_response->getStatus());
+        $this->assertSame('', $this->_response->getErrorCode());
+    }
+
     public function testSetFromHttpResponse() {
         $status = 'false';
         $errorCode = 'foobar';
         $responseBody = $status . "\n" . $errorCode;
+        $httpResponse = new Zend_Http_Response(200, array('Content-Type' => 'text/html'), $responseBody);
+
+        $this->_response->setFromHttpResponse($httpResponse);
+
+        $this->assertSame(false, $this->_response->getStatus());
+        $this->assertSame($errorCode, $this->_response->getErrorCode());
+    }
+
+    public function testSetFromHttpResponseWhenResponseHasSeveralLinesOfContent() {
+        $status = 'false';
+        $errorCode = 'foobar';
+        $responseBody = $status . "\n" . $errorCode . "\nSome data\nEven more data";
         $httpResponse = new Zend_Http_Response(200, array('Content-Type' => 'text/html'), $responseBody);
 
         $this->_response->setFromHttpResponse($httpResponse);

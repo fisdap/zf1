@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_View
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -37,7 +37,7 @@ require_once 'Zend/Layout.php';
  * @category   Zend
  * @package    Zend_View
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_View
  * @group      Zend_View_Helper
@@ -142,6 +142,26 @@ class Zend_View_Helper_JsonTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($layout->isEnabled());
         $data = $this->helper->json(array('foobar'), true);
         $this->assertTrue($layout->isEnabled());
+    }
+
+    /**
+     * @group ZF-12397
+     */
+    public function testJsonHelperWithKeepLayoutAsArray()
+    {
+        $layout = Zend_Layout::startMvc();
+        $this->assertTrue($layout->isEnabled());
+        $data = $this->helper->json(
+            array(
+                 'foobar',
+            ),
+            array(
+                 'keepLayouts' => true,
+                 'encodeData'  => false,
+            )
+        );
+        $this->assertTrue($layout->isEnabled());
+        $this->assertSame(array('foobar'), $data);
     }
     
     /**

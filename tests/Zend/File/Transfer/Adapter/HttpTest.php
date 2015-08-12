@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_File
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -39,7 +39,7 @@ require_once 'Zend/Validate/File/Upload.php';
  * @category   Zend
  * @package    Zend_File
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_File
  */
@@ -146,6 +146,18 @@ class Zend_File_Transfer_Adapter_HttpTest extends PHPUnit_Framework_TestCase
         } catch (Zend_File_Transfer_Exception $e) {
             $this->assertContains('not find', $e->getMessage());
         }
+    }
+
+    /**
+     * @group ZF-12451
+     */
+    public function testReceiveEmptyArray()
+    {
+        $_SERVER['CONTENT_LENGTH'] = 10;
+        $_FILES = array();
+
+        $adapter = new Zend_File_Transfer_Adapter_Http();
+        $this->assertFalse($adapter->receive(array()));
     }
 
     public function testReceiveValidatedFile()

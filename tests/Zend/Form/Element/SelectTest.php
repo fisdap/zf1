@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Form
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -33,7 +33,7 @@ require_once 'Zend/Form/Element/Select.php';
  * @category   Zend
  * @package    Zend_Form
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Form
  */
@@ -248,6 +248,26 @@ class Zend_Form_Element_SelectTest extends PHPUnit_Framework_TestCase
         $this->element->addMultiOption('1', '£' . number_format(1));
         $html = $this->element->render($this->getView());
         $this->assertContains('>£', $html);
+    }
+
+    /**
+     * @group ZF-8452
+     */
+    public function testRenderingAsArray()
+    {
+        $this->element->addMultiOption('bar', 'Bar')
+                      ->setIsArray(true)
+                      ->setDecorators(array('ViewHelper'));
+
+        $actual   = $this->element->render($this->getView());
+        $expected = PHP_EOL
+                  . '<select name="foo[]" id="foo">'
+                  . "\n"
+                  . '    <option value="bar">Bar</option>'
+                  . "\n"
+                  . '</select>';
+
+        $this->assertSame($expected, $actual);
     }
 
     /**

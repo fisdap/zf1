@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Controller
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -47,7 +47,7 @@ require_once 'Zend/Controller/Action/Helper/ViewRenderer.php';
  * @category   Zend
  * @package    Zend_Controller
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Controller
  * @group      Zend_Controller_Front
@@ -610,9 +610,11 @@ class Zend_Controller_FrontTest extends PHPUnit_Framework_TestCase
         try {
             $this->_controller->addModuleDirectory($moduleDir);
             $this->fail('Exception expected but not thrown');
-        }catch(Exception $e){
-            $this->assertType('Zend_Exception',$e);
-            $this->assertRegExp('/Directory \w+ not readable/',$e->getMessage());
+        } catch (Exception $e) {
+            $this->assertTrue($e instanceof Zend_Exception);
+            $this->assertRegExp(
+                '/Directory \w+ not readable/', $e->getMessage()
+            );
         }
     }
 

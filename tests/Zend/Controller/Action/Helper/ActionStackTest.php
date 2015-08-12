@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Controller
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -36,7 +36,7 @@ require_once 'Zend/Controller/Request/Simple.php';
  * @category   Zend
  * @package    Zend_Controller
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Controller
  * @group      Zend_Controller_Action
@@ -169,13 +169,15 @@ class Zend_Controller_Action_Helper_ActionStackTest extends PHPUnit_Framework_Te
         $helper = new Zend_Controller_Action_Helper_ActionStack();
         /** FC should be reseted to test ActionStack with a really blank FC */
         $this->front->resetInstance();
-        try{
+        try {
             $helper->direct('baz', 'bar', 'foo');
             $this->fail('Zend_Controller_Action_Exception should be thrown');
-        }catch(Zend_Exception $e){
-            $this->assertType('Zend_Controller_Action_Exception',
-                   $e,
-                   'Zend_Controller_Action_Exception expected, '.get_class($e).' caught');
+        } catch (Zend_Exception $e) {
+            $this->assertTrue(
+                $e instanceof Zend_Controller_Action_Exception,
+                'Zend_Controller_Action_Exception expected, ' . get_class($e)
+                    . ' caught'
+            );
         }
     }
 

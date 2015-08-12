@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Form
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -38,7 +38,7 @@ require_once 'Zend/View.php';
  * @category   Zend
  * @package    Zend_Form
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Form
  */
@@ -397,6 +397,36 @@ class Zend_Form_Decorator_LabelTest extends PHPUnit_Framework_TestCase
         $expected = '<label class="optional">test content My Label</label>';
 
         $this->assertEquals($expected, $actual);
+    }
+
+    /**
+     * @group ZF-8694
+     */
+    public function testLabelIsNotTranslatedTwice()
+    {
+        // Init translator
+        require_once 'Zend/Translate.php';
+        $translate = new Zend_Translate(
+            array(
+                 'adapter' => 'array',
+                 'content' => array(
+                     'firstLabel'  => 'secondLabel',
+                     'secondLabel' => 'thirdLabel',
+                 ),
+                 'locale'  => 'en'
+            )
+        );
+
+        // Create element
+        $element = new Zend_Form_Element('foo');
+        $element->setView($this->getView())
+                ->setLabel('firstLabel')
+                ->setTranslator($translate);
+
+        $this->decorator->setElement($element);
+
+        // Test
+        $this->assertEquals('secondLabel', $this->decorator->getLabel());
     }
 }
 

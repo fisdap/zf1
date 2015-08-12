@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Form
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -42,7 +42,7 @@ require_once 'Zend/View.php';
  * @category   Zend
  * @package    Zend_Form
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Form
  */
@@ -802,6 +802,32 @@ class Zend_Form_DisplayGroupTest extends PHPUnit_Framework_TestCase
         $this->group->setDecorators($t1);
         $t2 = $this->group->getDecorators();
         $this->assertEquals($t1, $t2);
+    }
+
+    /**
+     * @group ZF-12375
+     */
+    public function testHasTranslatorWithDefaultValue()
+    {
+        $this->assertFalse($this->group->hasTranslator());
+    }
+
+    /**
+     * @group ZF-12375
+     */
+    public function testHasTranslatorWithTranslateObject()
+    {
+        $this->group->setTranslator(
+            new Zend_Translate(
+                array(
+                    'adapter' => 'array',
+                    'content' => array(
+                        'foo' => 'Foo',
+                    ),
+                )
+            )
+        );
+        $this->assertTrue($this->group->hasTranslator());
     }
 }
 

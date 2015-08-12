@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Form
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -39,12 +39,20 @@ require_once 'Zend/View.php';
  * @category   Zend
  * @package    Zend_Form
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Form
  */
 class Zend_Form_Element_FileTest extends PHPUnit_Framework_TestCase
 {
+    /**
+     * @var Zend_Form_Element_File
+     */
+    protected $element;
+
+    /**
+     * @var bool
+     */
     protected $_errorOccurred = false;
 
     /**
@@ -498,13 +506,77 @@ class Zend_Form_Element_FileTest extends PHPUnit_Framework_TestCase
     public function testElementShouldAllowAdapterWithBackslahes()
     {
         if (version_compare(PHP_VERSION, '5.3.0', '<')) {
-            $this->markTestSkipped(__CLASS__ . '::' . __METHOD__ . ' requires PHP 5.3.0 or greater');
+            $this->markTestSkipped(
+                __CLASS__ . '::' . __METHOD__ . ' requires PHP 5.3.0 or greater'
+            );
             return;
         }
-        $this->element->addPrefixPath('Zend\Form\Element\FileTest\Adapter', dirname(__FILE__) . '/_files/TransferAdapter', 'transfer_adapter');
+        $this->element->addPrefixPath(
+            'Zend\Form\Element\FileTest\Adapter',
+            dirname(__FILE__) . '/_files/TransferAdapter',
+            'transfer_adapter'
+        );
         $this->element->setTransferAdapter('Bar');
         $test = $this->element->getTransferAdapter();
-        $this->assertType('\Zend\Form\Element\FileTest\Adapter\Bar', $test);
+        
+        $expectedType = 'Zend\Form\Element\FileTest\Adapter\Bar';
+        $this->assertTrue(
+            $test instanceof $expectedType
+        );
+    }
+
+    /**
+     * @group ZF-12210
+     */
+    public function testAutoInsertNotEmptyValidator()
+    {
+        $this->testElementShouldAllowSpecifyingAdapterUsingConcreteInstance();
+        $this->element->setRequired(true);
+
+        // Test before validation
+        $this->assertNull($this->element->getValidator('NotEmpty'));
+
+        // Test after validation
+        $this->element->isValid('foo.jpg');
+
+        $this->assertTrue(
+            $this->element->getValidator('NotEmpty') instanceof Zend_Validate_NotEmpty
+        );
+    }
+
+    /**
+     * @group GH-247
+     */
+    public function testCallbackFunctionAtHtmlTag()
+    {
+        $this->assertEquals(
+            array(
+                 'callback' => array(
+                     'Zend_Form_Element_File',
+                     'resolveElementId',
+                 ),
+            ),
+            $this->element->getDecorator('HtmlTag')->getOption('id')
+        );
+    }
+
+    /**
+     * @group GH-247
+     */
+    public function testDefaultDecoratorOrder()
+    {
+        $expected = array(
+            'Zend_Form_Decorator_File',
+            'Zend_Form_Decorator_Errors',
+            'Zend_Form_Decorator_Description',
+            'Zend_Form_Decorator_HtmlTag',
+            'Zend_Form_Decorator_Label',
+        );
+
+        $this->assertEquals(
+            $expected,
+            array_keys($this->element->getDecorators())
+        );
     }
 }
 

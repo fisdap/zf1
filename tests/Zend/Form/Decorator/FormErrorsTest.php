@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Form
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -28,6 +28,7 @@ if (!defined("PHPUnit_MAIN_METHOD")) {
 require_once 'Zend/Form/Decorator/FormErrors.php';
 require_once 'Zend/Form.php';
 require_once 'Zend/Form/SubForm.php';
+require_once 'Zend/Translate.php';
 require_once 'Zend/View.php';
 
 /**
@@ -36,7 +37,7 @@ require_once 'Zend/View.php';
  * @category   Zend
  * @package    Zend_Form
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Form
  */
@@ -360,6 +361,38 @@ class Zend_Form_Decorator_FormErrorsTest extends PHPUnit_Framework_TestCase
         $html = $this->form->render();
         $this->assertContains('<li><strong>form-badness</strong>', $html);
         $this->assertContains('<li><b><strong>Sub Bar: </strong>', $html);
+    }
+
+    /**
+     * @group ZF-8713
+     */
+    public function testElementNameIsTranslated()
+    {
+        // Translator
+        $translator = new Zend_Translate(
+            'array',
+            array(
+                 'Master Foo: ' => 'transleted label',
+                 'bar'          => 'translated name',
+            )
+        );
+
+        // Form
+        $this->setupForm();
+        $this->form->setDecorators(array($this->decorator));
+        $this->form->foo->setTranslator($translator);
+        $this->form->bar->setTranslator($translator);
+
+        // Test
+        $html = $this->form->render();
+        $this->assertContains(
+            '<li><b>transleted label</b><ul class="errors">',
+            $html
+        );
+        $this->assertContains(
+            '<li><b>translated name</b><ul class="errors">',
+            $html
+        );
     }
 
     public function markupOptionMethodsProvider()

@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Mobile
  * @subpackage Push
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id $
  */
@@ -26,7 +26,7 @@ require_once 'Zend/Mobile/Push/Message/Apns.php';
  * @category   Zend
  * @package    Zend_Mobile
  * @subpackage Push
- * @copyright  Copyright (c) 2005-2011 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Mobile
  * @group      Zend_Mobile_Push
@@ -110,6 +110,12 @@ class Zend_Mobile_Push_Message_ApnsTest extends PHPUnit_Framework_TestCase
     public function testSetBadgeNegativeNumberThrowsException()
     {
         $this->message->setBadge(-5);
+    }
+
+    public function testSetBadgeAllowsNull()
+    {
+        $this->message->setBadge(null);
+        $this->assertNull($this->message->getBadge());
     }
 
     public function testSetExpireReturnsInteger()

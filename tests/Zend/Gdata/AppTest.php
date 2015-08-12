@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Gdata
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id $
  */
@@ -28,7 +28,7 @@ require_once 'Zend/Gdata/TestUtility/MockHttpClient.php';
  * @category   Zend
  * @package    Zend_Gdata_App
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Gdata
  * @group      Zend_Gdata_App
@@ -41,23 +41,34 @@ class Zend_Gdata_AppTest extends PHPUnit_Framework_TestCase
         $this->expectedEtag = 'W/"CkcHQH8_fCp7ImA9WxRTGEw."';
         $this->expectedMajorProtocolVersion = 1;
         $this->expectedMinorProtocolVersion = 2;
-        $this->httpEntrySample = file_get_contents(
-                'Zend/Gdata/_files/AppSample1.txt',
-                true);
-        $this->httpEntrySampleWithoutVersion = file_get_contents(
-                'Zend/Gdata/_files/AppSample2.txt',
-                true);
-        $this->httpFeedSample = file_get_contents(
-                'Zend/Gdata/_files/AppSample3.txt',
-                true);
-        $this->httpFeedSampleWithoutVersion = file_get_contents(
-                'Zend/Gdata/_files/AppSample4.txt',
-                true);
+        $this->httpEntrySample = $this->loadResponse(
+            dirname(__FILE__) . '/_files/AppSample1.txt'
+        );
+        $this->httpEntrySampleWithoutVersion = $this->loadResponse(
+            dirname(__FILE__) . '/_files/AppSample2.txt'
+        );
+        $this->httpFeedSample = $this->loadResponse(
+            dirname(__FILE__) . '/_files/AppSample3.txt'
+        );
+        $this->httpFeedSampleWithoutVersion = $this->loadResponse(
+            dirname(__FILE__) . '/_files/AppSample4.txt'
+        );
 
         $this->adapter = new Test_Zend_Gdata_MockHttpClient();
         $this->client = new Zend_Gdata_HttpClient();
         $this->client->setAdapter($this->adapter);
         $this->service = new Zend_Gdata_App($this->client);
+    }
+
+    public function loadResponse($filename)
+    {
+        $response = file_get_contents($filename);
+
+        // Line endings are sometimes an issue inside the canned responses; the
+        // following is a negative lookbehind assertion, and replaces any \n
+        // not preceded by \r with the sequence \r\n, ensuring that the message
+        // is well-formed.
+        return preg_replace("#(?<!\r)\n#", "\r\n", $response);
     }
 
     public function testImportFile()
@@ -128,7 +139,7 @@ class Zend_Gdata_AppTest extends PHPUnit_Framework_TestCase
         $this->adapter->setResponse(array('HTTP/1.1 200 OK\r\n\r\n'));
 
         $this->service->setMajorProtocolVersion(1);
-        $this->service->setMinorProtocolVersion(NULL);
+        $this->service->setMinorProtocolVersion(null);
         $this->service->get('http://www.example.com');
 
         $headers = $this->adapter->popRequest()->headers;
@@ -162,7 +173,7 @@ class Zend_Gdata_AppTest extends PHPUnit_Framework_TestCase
         $this->adapter->setResponse(array('HTTP/1.1 200 OK\r\n\r\n'));
 
         $this->service->setMajorProtocolVersion(2);
-        $this->service->setMinorProtocolVersion(NULL);
+        $this->service->setMinorProtocolVersion(null);
         $this->service->get('http://www.example.com');
 
         $headers = $this->adapter->popRequest()->headers;
@@ -583,5 +594,51 @@ class Zend_Gdata_AppTest extends PHPUnit_Framework_TestCase
         $this->service->setMinorProtocolVersion($v);
         $feed = $this->service->newFeed();
         $this->assertEquals($v, $feed->getMinorProtocolVersion());
+    }
+
+    /**
+     * When error handler is overridden to throw an ErrorException, the extension loader
+     * in Zend_Gdata will throw an ErrorException when the class doesn't exist in the 
+     * first extension directory even if it exists in subsequent ones.  This test 
+     * enforces a fix that keeps this from happening
+     *
+     * @group ZF-12268
+     * @group ZF-7013
+     */
+    public function testLoadExtensionCausesFatalErrorWhenErrorHandlerIsOverridden()
+    {
+        // Override the error handler to throw an ErrorException
+        set_error_handler(create_function('$a, $b, $c, $d', 'throw new ErrorException($b, 0, $a, $c, $d);'), E_ALL);
+        try { 
+            $eq = $this->service->newEventQuery();
+            restore_error_handler();
+            $this->assertTrue($eq instanceof Zend_Gdata_Calendar_EventQuery);
+        } catch ( Zend_Gdata_App_Exception $ex ) {
+            // If we catch this exception, it means the ErrorException resulting
+            // from the include_once E_NOTICE was caught in the right place,
+            // but the extension was not found in any directory
+            // (Expected since we didn't load the Calendar extension dir)
+            restore_error_handler();
+            $this->assertContains('EventQuery', $ex->getMessage());
+        } catch ( ErrorException $ex ) {
+            restore_error_handler();
+            $this->fail('Did not expect ErrorException');
+        }
+    }
+
+    /**
+     * @group ZF-10243
+     */
+    public function testStaticImportWithoutUsingObjectMapping()
+    {
+        $this->adapter->setResponse($this->httpEntrySample);
+        $feed = Zend_Gdata_App::import(
+            'http://www.example.com',
+            $this->client,
+            'Zend_Gdata_App_Feed',
+            false
+        );
+
+        $this->assertContains('<id>12345678901234567890</id>', $feed);
     }
 }

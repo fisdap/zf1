@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_View
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -29,7 +29,7 @@ require_once 'Zend/View/Helper/Navigation/Links.php';
  * @category   Zend
  * @package    Zend_View
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_View
  * @group      Zend_View_Helper
@@ -710,6 +710,28 @@ class Zend_View_Helper_Navigation_LinksTest
 
         $expected = '';
         $actual = $this->_helper->setRenderFlag($flag)->render();
+
+        $this->assertEquals($expected, $actual);
+    }
+
+    /**
+     * @group ZF-8874
+     */
+    public function testRenderingWithoutWhitespace()
+    {
+        $active = $this->_helper->findOneByLabel('Page 1.1');
+        $newFlag = Zend_View_Helper_Navigation_Links::RENDER_NEXT |
+                   Zend_View_Helper_Navigation_Links::RENDER_PREV;
+        $this->_helper->setRenderFlag($newFlag);
+        $this->_helper->setIndent('  ');
+        $active->active = true;
+
+        $this->_helper->setFormatOutput(false);
+
+        // build expected and actual result
+        $expected = '<link rel="next" href="page2" title="Page 2">'
+                  . '<link rel="prev" href="page1" title="Page 1">';
+        $actual = $this->_helper->render();
 
         $this->assertEquals($expected, $actual);
     }

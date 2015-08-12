@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Form
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -36,7 +36,7 @@ require_once 'Zend/View.php';
  * @category   Zend
  * @package    Zend_Form
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Form
  */
@@ -180,6 +180,39 @@ class Zend_Form_Decorator_DescriptionTest extends PHPUnit_Framework_TestCase
                       ->setTranslator($translate);
         $html = $this->decorator->render('');
         $this->assertContains($translations['description'], $html);
+    }
+
+    /**
+     * @group ZF-8694
+     */
+    public function testDescriptionIsNotTranslatedTwice()
+    {
+        // Init translator
+        require_once 'Zend/Translate.php';
+        $translate = new Zend_Translate(
+            array(
+                 'adapter' => 'array',
+                 'content' => array(
+                     'firstDescription'  => 'secondDescription',
+                     'secondDescription' => 'thirdDescription',
+                 ),
+                 'locale'  => 'en'
+            )
+        );
+
+        // Create element
+        $element = new Zend_Form_Element('foo');
+        $element->setView($this->getView())
+                ->setDescription('firstDescription')
+                ->setTranslator($translate);
+
+        $this->decorator->setElement($element);
+
+        // Test
+        $this->assertEquals(
+            '<p class="hint">secondDescription</p>',
+            trim($this->decorator->render(''))
+        );
     }
 }
 

@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Form
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -34,12 +34,17 @@ require_once 'Zend/Translate.php';
  * @category   Zend
  * @package    Zend_Form
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Form
  */
 class Zend_Form_Element_ButtonTest extends PHPUnit_Framework_TestCase
 {
+    /**
+     * @var Zend_Form_Element_Button
+     */
+    protected $element;
+
     /**
      * Runs the test methods of this class.
      *
@@ -148,6 +153,41 @@ class Zend_Form_Element_ButtonTest extends PHPUnit_Framework_TestCase
     public function testSetDefaultIgnoredToTrueWhenNotDefined()
     {
         $this->assertTrue($this->element->getIgnore());
+    }
+
+    /**
+     * @group ZF-5056
+     */
+    public function testValidateAlwaysReturnsTrue()
+    {
+        $this->element->setValue('foo');
+
+        $this->assertTrue($this->element->isValid('bar'));
+    }
+
+    /**
+     * @group ZF-5056
+     */
+    public function testRenderingWithValueAfterValidation()
+    {
+        // Set element options
+        $this->element->setOptions(
+            array(
+                 'label'      => 'Foo',
+                 'value'      => 'bar',
+                 'decorators' => array(
+                     'ViewHelper',
+                 ),
+            )
+        );
+
+        // Validate
+        $this->element->isValid(null);
+
+        $this->assertEquals(
+            PHP_EOL . '<button name="foo" id="foo" type="button" value="bar">Foo</button>',
+            $this->element->render($this->getView())
+        );
     }
 
     /**

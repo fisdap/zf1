@@ -1172,15 +1172,6 @@
             </xi:include>
         </chapter>
 
-        <chapter id="zend.infocard">
-            <title>Zend_InfoCard</title>
-            <xi:include href="module_specs/Zend_InfoCard-Basics.xml">
-                <xi:fallback>
-                    <xi:include href="../en/module_specs/Zend_InfoCard-Basics.xml" />
-                </xi:fallback>
-            </xi:include>
-        </chapter>
-
         <chapter id="zend.json">
             <title>Zend_Json</title>
             <xi:include href="module_specs/Zend_Json-Introduction.xml">
@@ -1976,11 +1967,6 @@
                     <xi:include href="../en/module_specs/Zend_Service_LiveDocx.xml" />
                 </xi:fallback>
             </xi:include>
-            <xi:include href="module_specs/Zend_Service_Nirvanix.xml">
-                <xi:fallback>
-                    <xi:include href="../en/module_specs/Zend_Service_Nirvanix.xml" />
-                </xi:fallback>
-            </xi:include>
             <xi:include href="module_specs/Zend_Service_Rackspace.xml">
                 <xi:fallback>
                     <xi:include href="../en/module_specs/Zend_Service_Rackspace.xml" />
@@ -2401,6 +2387,11 @@
 
     <appendix id="migration">
         <title>&appendix.migration.title;</title>
+        <xi:include href="ref/migration-112.xml">
+            <xi:fallback>
+                <xi:include href="../en/ref/migration-112.xml" />
+            </xi:fallback>
+        </xi:include>
         <xi:include href="ref/migration-110.xml">
             <xi:fallback>
                 <xi:include href="../en/ref/migration-110.xml" />

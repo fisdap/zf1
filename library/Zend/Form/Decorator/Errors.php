@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Form
  * @subpackage Decorator
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  */
 
@@ -30,7 +30,7 @@ require_once 'Zend/Form/Decorator/Abstract.php';
  * @category   Zend
  * @package    Zend_Form
  * @subpackage Decorator
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -50,7 +50,15 @@ class Zend_Form_Decorator_Errors extends Zend_Form_Decorator_Abstract
             return $content;
         }
 
-        $errors = $element->getMessages();
+        // Get error messages
+        if ($element instanceof Zend_Form
+            && null !== $element->getElementsBelongTo()
+        ) {
+            $errors = $element->getMessages(null, true);
+        } else {
+            $errors = $element->getMessages();
+        }
+
         if (empty($errors)) {
             return $content;
         }

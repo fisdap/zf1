@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Service_Delicious
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id: AllTests.php 20096 2010-01-06 02:05:09Z bkarwin $
  */
@@ -25,13 +25,12 @@ if (!defined('PHPUnit_MAIN_METHOD')) {
 }
 
 require_once 'Zend/Service/Twitter/TwitterTest.php';
-require_once 'Zend/Service/Twitter/TwitterSearchTest.php';
 
 /**
  * @category   Zend
  * @package    Zend_Service_Twitter
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Service
  * @group      Zend_Service_Twitter
@@ -58,7 +57,6 @@ class Zend_Service_Twitter_AllTests
         $suite = new PHPUnit_Framework_TestSuite('Zend Framework - Zend_Service_Twitter');
 
         $suite->addTestSuite('Zend_Service_Twitter_TwitterTest');
-        $suite->addTestSuite('Zend_Service_Twitter_TwitterSearchTest');
 
         return $suite;
     }

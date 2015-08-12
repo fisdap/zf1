@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Json
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -44,7 +44,7 @@ require_once 'Zend/Json/Decoder.php';
  * @category   Zend
  * @package    Zend_Json
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Json
  */
@@ -754,8 +754,28 @@ EOB;
 
     public function testEncodeObjectImplementingIterator()
     {
-        $this->markTestIncomplete('Test is not yet finished.');
+        $iterator = new ArrayIterator(array(
+            'foo' => 'bar',
+            'baz' => 5
+        ));
+        $target = '{"__className":"ArrayIterator","foo":"bar","baz":5}';
+
+        Zend_Json::$useBuiltinEncoderDecoder = true;
+        $this->assertEquals($target, Zend_Json::encode($iterator));
     }
+
+    /**
+     * @group ZF-12347
+     */
+    public function testEncodeObjectImplementingIteratorAggregate()
+    {
+        $iterator = new ZF12347_IteratorAggregate();
+        $target = '{"__className":"ZF12347_IteratorAggregate","foo":"bar","baz":5}';
+
+        Zend_Json::$useBuiltinEncoderDecoder = true;
+        $this->assertEquals($target, Zend_Json::encode($iterator));
+    }
+
 
     /**
      * @group ZF-8663
@@ -1010,5 +1030,20 @@ class Zend_Json_ToJsonWithExpr
         );
 
         return Zend_Json::encode($data, false, array('enableJsonExprFinder' => true));
+    }
+}
+
+/**
+ * @see ZF-12347
+ */
+class ZF12347_IteratorAggregate implements IteratorAggregate
+{
+    protected $array = array(
+        'foo' => 'bar',
+        'baz' => 5
+    );
+
+    public function getIterator() {
+        return new ArrayIterator($this->array);
     }
 }

@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Validate
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -33,7 +33,7 @@ require_once 'Zend/Validate/EmailAddress.php';
  * @category   Zend
  * @package    Zend_Validate
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Validate
  */
@@ -165,7 +165,7 @@ class Zend_Validate_EmailAddressTest extends PHPUnit_Framework_TestCase
 
         $messages = $this->_validator->getMessages();
 
-        $this->assertType('array', $messages);
+        $this->assertTrue(is_array($messages));
         $this->assertEquals(0, count($messages));
     }
 
@@ -190,6 +190,19 @@ class Zend_Validate_EmailAddressTest extends PHPUnit_Framework_TestCase
     public function testQuotedString()
     {
         $emailAddresses = array(
+            '""@domain.com', // Optional
+            '" "@domain.com', // x20
+            '"!"@domain.com', // x21
+            '"\""@domain.com', // \" (escaped x22)
+            '"#"@domain.com', // x23
+            '"$"@domain.com', // x24
+            '"Z"@domain.com', // x5A
+            '"["@domain.com', // x5B
+            '"\\\"@domain.com', // \\ (escaped x5C)
+            '"]"@domain.com', // x5D
+            '"^"@domain.com', // x5E
+            '"}"@domain.com', // x7D
+            '"~"@domain.com', // x7E
             '"username"@example.com',
             '"bob%jones"@domain.com',
             '"bob jones"@domain.com',
@@ -202,6 +215,29 @@ class Zend_Validate_EmailAddressTest extends PHPUnit_Framework_TestCase
                             . implode("\n", $this->_validator->getMessages()));
         }
     }
+
+    /**
+     * Ensures that quoted-string local part is considered invalid
+     *
+     * @return void
+     */
+    public function testInvalidQuotedString()
+    {
+        $emailAddresses = array(
+            "\"\x00\"@example.com",
+            "\"\x01\"@example.com",
+            "\"\x1E\"@example.com",
+            "\"\x1F\"@example.com",
+            '"""@example.com', // x22 (not escaped)
+            '"\"@example.com', // x5C (not escaped)
+            "\"\x7F\"@example.com",
+        );
+        foreach ($emailAddresses as $input) {
+            $this->assertFalse($this->_validator->isValid($input), "$input failed to pass validation:\n"
+                . implode("\n", $this->_validator->getMessages()));
+        }
+    }
+
 
     /**
      * Ensures that validation fails when the e-mail is given as for display,
@@ -585,6 +621,19 @@ class Zend_Validate_EmailAddressTest extends PHPUnit_Framework_TestCase
     {
         $hostname = $this->_validator->getHostnameValidator();
         $this->assertTrue($hostname instanceof Zend_Validate_Hostname);
+    }
+
+    /**
+     * @group GH-62
+     */
+    public function testIdnHostnameInEmaillAddress()
+    {
+        if (version_compare(PHP_VERSION, '5.3.0', '<')) {
+            $this->markTestSkipped('idn_to_ascii() is available in intl in PHP 5.3.0+');
+        }
+        $validator = new Zend_Validate_EmailAddress();
+        $validator->setValidateMx(true);
+        $this->assertTrue($validator->isValid('testmail@zürich.ch'));
     }
 }
 

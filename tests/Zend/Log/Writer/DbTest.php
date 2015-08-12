@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Log
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -31,7 +31,7 @@ require_once 'Zend/Log/Writer/Db.php';
  * @category   Zend
  * @package    Zend_Log
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Log
  */
@@ -58,7 +58,7 @@ class Zend_Log_Writer_DbTest extends PHPUnit_Framework_TestCase
             $this->writer->setFormatter(new Zend_Log_Formatter_Simple());
             $this->fail();
         } catch (Exception $e) {
-            $this->assertType('Zend_Log_Exception', $e);
+            $this->assertTrue($e instanceof Zend_Log_Exception);
             $this->assertRegExp('/does not support formatting/i', $e->getMessage());
         }
     }
@@ -113,7 +113,7 @@ class Zend_Log_Writer_DbTest extends PHPUnit_Framework_TestCase
             $this->writer->write(array('message' => 'this should fail'));
             $this->fail();
         } catch (Exception $e) {
-            $this->assertType('Zend_Log_Exception', $e);
+            $this->assertTrue($e instanceof Zend_Log_Exception);
             $this->assertEquals('Database adapter is null', $e->getMessage());
         }
     }
@@ -138,12 +138,91 @@ class Zend_Log_Writer_DbTest extends PHPUnit_Framework_TestCase
      */
     public function testThrowStrictSetFormatter()
     {
+        if (version_compare(phpversion(), '7', '>=')) {
+            $this->markTestSkipped('Invalid typehinting is PHP Fatal error in PHP7+');
+        }
+
         try {
             $this->writer->setFormatter(new StdClass());
         } catch (Exception $e) {
-            $this->assertType('PHPUnit_Framework_Error', $e);
+            $this->assertTrue($e instanceof PHPUnit_Framework_Error);
             $this->assertContains('must implement interface', $e->getMessage());
         }
+    }
+
+    /**
+     * @group ZF-12514
+     */
+    public function testWriteWithExtraInfos()
+    {
+        // Init writer
+        $this->writer = new Zend_Log_Writer_Db(
+            $this->db, $this->tableName,
+            array(
+                 'message-field'  => 'message',
+                 'priority-field' => 'priority',
+                 'info-field'     => 'info',
+            )
+        );
+
+        // Log
+        $message  = 'message-to-log';
+        $priority = 2;
+        $info     = 'extra-info';
+        $this->writer->write(
+            array(
+                 'message'  => $message,
+                 'priority' => $priority,
+                 'info'     => $info,
+            )
+        );
+
+        // Test
+        $binds = array(
+            'message-field'  => $message,
+            'priority-field' => $priority,
+            'info-field'     => $info,
+        );
+        $this->assertEquals(
+            array($this->tableName, $binds),
+            $this->db->calls['insert'][0]
+        );
+    }
+
+    /**
+     * @group ZF-12514
+     */
+    public function testWriteWithoutExtraInfos()
+    {
+        // Init writer
+        $this->writer = new Zend_Log_Writer_Db(
+            $this->db, $this->tableName,
+            array(
+                 'message-field'  => 'message',
+                 'priority-field' => 'priority',
+                 'info-field'     => 'info',
+            )
+        );
+
+        // Log
+        $message  = 'message-to-log';
+        $priority = 2;
+        $this->writer->write(
+            array(
+                 'message'  => $message,
+                 'priority' => $priority,
+            )
+        );
+
+        // Test
+        $binds = array(
+            'message-field'  => $message,
+            'priority-field' => $priority,
+        );
+        $this->assertEquals(
+            array($this->tableName, $binds),
+            $this->db->calls['insert'][0]
+        );
     }
 }
 

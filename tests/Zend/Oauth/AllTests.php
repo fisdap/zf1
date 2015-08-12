@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Oauth
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -25,6 +25,8 @@ if (!defined('PHPUnit_MAIN_METHOD')) {
 }
 
 require_once 'OauthTest.php';
+require_once 'ClientTest.php';
+require_once 'ConfigTest.php';
 require_once 'Oauth/ConsumerTest.php';
 require_once 'Oauth/Signature/AbstractTest.php';
 require_once 'Oauth/Signature/PlaintextTest.php';
@@ -42,7 +44,7 @@ require_once 'Oauth/Token/AccessTest.php';
  * @category   Zend
  * @package    Zend_Oauth
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Oauth
  */
@@ -58,6 +60,8 @@ class Zend_Oauth_AllTests
         $suite = new PHPUnit_Framework_TestSuite('Zend Framework - Zend_Oauth');
 
         $suite->addTestSuite('Zend_OauthTest');
+        $suite->addTestSuite('Zend_Oauth_ClientTest');
+        $suite->addTestSuite('Zend_Oauth_ConfigTest');
         $suite->addTestSuite('Zend_Oauth_ConsumerTest');
         $suite->addTestSuite('Zend_Oauth_Signature_AbstractTest');
         $suite->addTestSuite('Zend_Oauth_Signature_PlaintextTest');

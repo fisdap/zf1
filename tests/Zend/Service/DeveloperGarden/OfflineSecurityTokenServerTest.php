@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Service_DeveloperGarden
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -40,7 +40,7 @@ require_once 'Zend/Service/DeveloperGarden/SecurityTokenServer/Cache.php';
  * @category   Zend
  * @package    Zend_Service_DeveloperGarden
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -164,6 +164,10 @@ class Zend_Service_DeveloperGarden_OfflineSecurityTokenServerTest extends PHPUni
 
     public function testSetTokenToCache1stParamException()
     {
+        if (version_compare(phpversion(), '7', '>=')) {
+            $this->markTestSkipped('Invalid typehinting is PHP Fatal error in PHP7+');
+        }
+
         try {
             Zend_Service_DeveloperGarden_SecurityTokenServer_Cache::setTokenToCache(
                 'NotExisting',
@@ -176,6 +180,10 @@ class Zend_Service_DeveloperGarden_OfflineSecurityTokenServerTest extends PHPUni
 
     public function testSetTokenToCache2ndParamException()
     {
+        if (version_compare(phpversion(), '7', '>=')) {
+            $this->markTestSkipped('Invalid typehinting is PHP Fatal error in PHP7+');
+        }
+
         try {
             Zend_Service_DeveloperGarden_SecurityTokenServer_Cache::setTokenToCache(
                 'securityToken',
@@ -241,9 +249,8 @@ class Zend_Service_DeveloperGarden_OfflineSecurityTokenServerTest extends PHPUni
         $this->assertNull(
             Zend_Service_DeveloperGarden_SecurityTokenServer_Cache::setCache($cache)
         );
-        $this->assertType(
-            'Zend_Cache_Core',
-            Zend_Service_DeveloperGarden_SecurityTokenServer_Cache::getCache()
+        $this->assertTrue(
+            Zend_Service_DeveloperGarden_SecurityTokenServer_Cache::getCache() instanceof Zend_Cache_Core
         );
     }
 
@@ -254,9 +261,8 @@ class Zend_Service_DeveloperGarden_OfflineSecurityTokenServerTest extends PHPUni
         $this->assertNull(
             Zend_Service_DeveloperGarden_SecurityTokenServer_Cache::setCache($cache)
         );
-        $this->assertType(
-            'Zend_Cache_Core',
-            Zend_Service_DeveloperGarden_SecurityTokenServer_Cache::getCache()
+        $this->assertTrue(
+            Zend_Service_DeveloperGarden_SecurityTokenServer_Cache::getCache() instanceof Zend_Cache_Core
         );
 
         Zend_Service_DeveloperGarden_SecurityTokenServer_Cache::removeCache();
@@ -272,9 +278,8 @@ class Zend_Service_DeveloperGarden_OfflineSecurityTokenServerTest extends PHPUni
         $this->assertNull(
             Zend_Service_DeveloperGarden_SecurityTokenServer_Cache::setCache($cache)
         );
-        $this->assertType(
-            'Zend_Cache_Core',
-            Zend_Service_DeveloperGarden_SecurityTokenServer_Cache::getCache()
+        $this->assertTrue(
+            Zend_Service_DeveloperGarden_SecurityTokenServer_Cache::getCache() instanceof Zend_Cache_Core
         );
 
         Zend_Service_DeveloperGarden_SecurityTokenServer_Cache::clearCache();
@@ -292,9 +297,8 @@ class Zend_Service_DeveloperGarden_OfflineSecurityTokenServerTest extends PHPUni
         $this->assertNull(
             Zend_Service_DeveloperGarden_SecurityTokenServer_Cache::setCache($cache)
         );
-        $this->assertType(
-            'Zend_Cache_Core',
-            Zend_Service_DeveloperGarden_SecurityTokenServer_Cache::getCache()
+        $this->assertTrue(
+            Zend_Service_DeveloperGarden_SecurityTokenServer_Cache::getCache() instanceof Zend_Cache_Core
         );
 
         Zend_Service_DeveloperGarden_SecurityTokenServer_Cache::resetTokenCache();

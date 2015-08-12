@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_View
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -31,7 +31,7 @@ require_once 'Zend/View/Helper/Navigation/Sitemap.php';
  * @category   Zend
  * @package    Zend_View
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_View
  * @group      Zend_View_Helper
@@ -240,7 +240,7 @@ class Zend_View_Helper_Navigation_SitemapTest
         $this->_helper->setUseSitemapValidators(false);
 
         $expected = $this->_getExpected('sitemap/invalid.xml');
-        $this->assertEquals($expected, $this->_helper->render($nav));
+        $this->assertXmlStringEqualsXmlString($expected, $this->_helper->render($nav));
     }
 
     public function testSetServerUrlRequiresValidUri()
@@ -299,5 +299,19 @@ class Zend_View_Helper_Navigation_SitemapTest
         }
 
         $this->fail('A Zend_View_Exception was not thrown when using Schema validation');
+    }
+
+    /**
+     * @group ZF-8874
+     */
+    public function testRenderingWithoutWhitespace()
+    {
+        // Reset format output option
+        $this->_helper->setFormatOutput(false);
+
+        $expected = $this->_helper->render();
+        $actual   = $this->_getExpected('sitemap/without_whitespace.xml');
+
+        $this->assertEquals($expected, $actual);
     }
 }

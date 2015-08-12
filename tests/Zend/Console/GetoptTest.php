@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Console_Getop
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -29,7 +29,7 @@ require_once 'Zend/Console/Getopt.php';
  * @category   Zend
  * @package    Zend_Console_Getopt
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Console_Getopt
  */
@@ -114,7 +114,7 @@ class Zend_Console_GetoptTest extends PHPUnit_Framework_TestCase
             $opts = new Zend_Console_Getopt(array('|a'=>'Apple option'));
             $this->fail('Expected to catch Zend_Console_Getopt_Exception');
         } catch (Zend_Exception $e) {
-            $this->assertType('Zend_Console_Getopt_Exception', $e,
+            $this->assertTrue($e instanceof Zend_Console_Getopt_Exception,
                 'Expected Zend_Console_Getopt_Exception, got '.get_class($e));
             $this->assertEquals($e->getMessage(),
                 'Blank flag not allowed in rule "|a".');
@@ -128,7 +128,7 @@ class Zend_Console_GetoptTest extends PHPUnit_Framework_TestCase
                 array('apple|apple'=>'apple-option'));
             $this->fail('Expected to catch Zend_Console_Getopt_Exception');
         } catch (Zend_Exception $e) {
-            $this->assertType('Zend_Console_Getopt_Exception', $e,
+            $this->assertTrue($e instanceof Zend_Console_Getopt_Exception,
                 'Expected Zend_Console_Getopt_Exception, got '.get_class($e));
             $this->assertEquals($e->getMessage(),
                 'Option "--apple" is being defined more than once.');
@@ -139,7 +139,7 @@ class Zend_Console_GetoptTest extends PHPUnit_Framework_TestCase
                 array('a'=>'Apple option', 'apple|a'=>'Apple option'));
             $this->fail('Expected to catch Zend_Console_Getopt_Exception');
         } catch (Zend_Exception $e) {
-            $this->assertType('Zend_Console_Getopt_Exception', $e,
+            $this->assertTrue($e instanceof Zend_Console_Getopt_Exception,
                 'Expected Zend_Console_Getopt_Exception, got '.get_class($e));
             $this->assertEquals($e->getMessage(),
                 'Option "-a" is being defined more than once.');
@@ -158,7 +158,7 @@ class Zend_Console_GetoptTest extends PHPUnit_Framework_TestCase
             $opts->parse();
             $this->fail('Expected to catch Zend_Console_Getopt_Exception');
         } catch (Zend_Exception $e) {
-            $this->assertType('Zend_Console_Getopt_Exception', $e,
+            $this->assertTrue($e instanceof Zend_Console_Getopt_Exception,
                 'Expected Zend_Console_Getopt_Exception, got '.get_class($e));
             $this->assertEquals($e->getMessage(), 'Option "pear" is not recognized.');
         }
@@ -178,7 +178,7 @@ class Zend_Console_GetoptTest extends PHPUnit_Framework_TestCase
             $opts->parse();
             $this->fail('Expected to catch Zend_Console_Getopt_Exception');
         } catch (Zend_Exception $e) {
-            $this->assertType('Zend_Console_Getopt_Exception', $e,
+            $this->assertTrue($e instanceof Zend_Console_Getopt_Exception,
                 'Expected Zend_Console_Getopt_Exception, got '.get_class($e));
             $this->assertEquals($e->getMessage(), 'Option "apple" requires a parameter.');
         }
@@ -270,6 +270,73 @@ class Zend_Console_GetoptTest extends PHPUnit_Framework_TestCase
     }
 
     /**
+     * @group GH-377
+     */
+    public function testVerifyRequiredArgument()
+    {
+        $opts = new Zend_Console_Getopt(
+            array('apple|a=s' => "First required argument")
+        );
+
+        try {
+            $opts->parse();
+            $opts->checkRequiredArguments();
+            $this->fail('Expected to catch a Zend_Console_Getopt_Exception');
+        } catch (Zend_Exception $e) {
+            $this->assertTrue(
+                $e instanceof Zend_Console_Getopt_Exception,
+                'Expected Zend_Console_Getopt_Exception, got ' . get_class($e)
+            );
+            $this->assertEquals(
+                'Option "$alias" requires a parameter.', $e->getMessage()
+            );
+        }
+
+        $opts->addArguments(
+            array(
+                "-a",
+                "apple"
+            )
+        );
+        $opts->parse();
+        $opts->checkRequiredArguments();//-> no Exception here
+    }
+
+    /**
+     * @group GH-377
+     */
+    public function testEmptyRequiredOption()
+    {
+        $opts = new Zend_Console_Getopt(
+            array(
+                'apple|a=s' => "First required argument",
+                'banana|b=i' => "Second required argument"
+            )
+        );
+        $opts->addArguments(
+            array(
+                "-a",
+                "-b",
+                "123"
+            )
+        );
+
+        try {
+            $opts->parse();
+            $opts->checkRequiredArguments();
+            $this->fail('Expected to catch a Zend_Console_Getopt_Exception');
+        } catch (Zend_Exception $e) {
+            $this->assertTrue(
+                $e instanceof Zend_Console_Getopt_Exception,
+                'Expected Zend_Console_Getopt_Exception, got ' . get_class($e)
+            );
+            $this->assertEquals(
+                'Option "a" requires a parameter.', $e->getMessage()
+            );
+        }
+    }
+
+    /**
      * @group ZF-5948
      */
     public function testGetoptAddSetNonArrayArguments()
@@ -279,7 +346,7 @@ class Zend_Console_GetoptTest extends PHPUnit_Framework_TestCase
             $opts->setArguments('-a');
             $this->fail('Expected to catch a Zend_Console_Getopt_Exception');
         } catch(Zend_Exception $e) {
-            $this->assertType('Zend_Console_Getopt_Exception', $e,
+            $this->assertTrue($e instanceof Zend_Console_Getopt_Exception,
                 'Expected Zend_Console_Getopt_Exception, got '. get_class($e));
             $this->assertEquals("Parameter #1 to setArguments should be an array",
                 $e->getMessage());
@@ -289,7 +356,7 @@ class Zend_Console_GetoptTest extends PHPUnit_Framework_TestCase
             $opts->addArguments('-b');
             $this->fail('Expected to catch a Zend_Console_Getopt_Exception');
         } catch(Zend_Exception $e) {
-            $this->assertType('Zend_Console_Getopt_Exception', $e,
+            $this->assertTrue($e instanceof Zend_Console_Getopt_Exception,
                 'Expected Zend_Console_Getopt_Exception, got '. get_class($e));
             $this->assertEquals("Parameter #1 to addArguments should be an array",
                 $e->getMessage());
@@ -321,7 +388,7 @@ class Zend_Console_GetoptTest extends PHPUnit_Framework_TestCase
             $opts->parse();
             $this->fail('Expected to catch Zend_Console_Getopt_Exception');
         } catch (Zend_Exception $e) {
-            $this->assertType('Zend_Console_Getopt_Exception', $e,
+            $this->assertTrue($e instanceof Zend_Console_Getopt_Exception,
                 'Expected Zend_Console_Getopt_Exception, got '.get_class($e));
             $this->assertEquals($e->getMessage(), 'Option "fakeflag" is not recognized.');
         }
@@ -355,7 +422,7 @@ class Zend_Console_GetoptTest extends PHPUnit_Framework_TestCase
             $opts->parse();
             $this->fail('Expected to catch Zend_Console_Getopt_Exception');
         } catch (Zend_Exception $e) {
-            $this->assertType('Zend_Console_Getopt_Exception', $e,
+            $this->assertTrue($e instanceof Zend_Console_Getopt_Exception,
                 'Expected Zend_Console_Getopt_Exception, got '.get_class($e));
             $message = preg_replace('/Usage: .* \[ options \]/',
                 'Usage: <progname> [ options ]',
@@ -390,7 +457,7 @@ class Zend_Console_GetoptTest extends PHPUnit_Framework_TestCase
             $opts->setAliases(array('b' => 'apple'));
             $this->fail('Expected to catch Zend_Console_Getopt_Exception');
         } catch (Zend_Exception $e) {
-            $this->assertType('Zend_Console_Getopt_Exception', $e,
+            $this->assertTrue($e instanceof Zend_Console_Getopt_Exception,
                 'Expected Zend_Console_Getopt_Exception, got '.get_class($e));
             $this->assertEquals($e->getMessage(), 'Option "--apple" is being defined more than once.');
         }
@@ -405,7 +472,7 @@ class Zend_Console_GetoptTest extends PHPUnit_Framework_TestCase
             $opts->parse();
             $this->fail('Expected to catch Zend_Console_Getopt_Exception');
         } catch (Zend_Exception $e) {
-            $this->assertType('Zend_Console_Getopt_Exception', $e,
+            $this->assertTrue($e instanceof Zend_Console_Getopt_Exception,
                 'Expected Zend_Console_Getopt_Exception, got '.get_class($e));
             $this->assertEquals('Option "c" is not recognized.', $e->getMessage());
         }
@@ -462,7 +529,7 @@ class Zend_Console_GetoptTest extends PHPUnit_Framework_TestCase
             $opts->parse();
             $this->fail('Expected to catch Zend_Console_Getopt_Exception');
         } catch (Zend_Exception $e) {
-            $this->assertType('Zend_Console_Getopt_Exception', $e,
+            $this->assertTrue($e instanceof Zend_Console_Getopt_Exception,
                 'Expected Zend_Console_Getopt_Exception, got '.get_class($e));
             $this->assertEquals($e->getMessage(), 'Option "apple" requires an integer parameter, but was given "noninteger".');
         }
@@ -475,7 +542,7 @@ class Zend_Console_GetoptTest extends PHPUnit_Framework_TestCase
             $opts->parse();
             $this->fail('Expected to catch Zend_Console_Getopt_Exception');
         } catch (Zend_Exception $e) {
-            $this->assertType('Zend_Console_Getopt_Exception', $e,
+            $this->assertTrue($e instanceof Zend_Console_Getopt_Exception,
                 'Expected Zend_Console_Getopt_Exception, got '.get_class($e));
             $this->assertEquals($e->getMessage(), 'Option "banana" requires a single-word parameter, but was given "two words".');
         }

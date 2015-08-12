@@ -15,7 +15,7 @@
  * @category   Zend
  * @package    Zend_Form
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
@@ -42,7 +42,7 @@ require_once 'Zend/View.php';
  * @category   Zend
  * @package    Zend_Form
  * @subpackage UnitTests
- * @copyright  Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
+ * @copyright  Copyright (c) 2005-2015 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @group      Zend_Form
  */
@@ -2231,6 +2231,18 @@ class Zend_Form_ElementTest extends PHPUnit_Framework_TestCase
         $paths = $decoratorLoader->getPaths('Zf\Foo\Decorator');
         $this->assertTrue(is_array($paths), var_export($paths, 1));
         $this->assertContains('Decorator', $paths[0]);
+    }
+
+    /**
+     * @group ZF-12439
+     */
+    public function testSettingAnEmptyArrayValueGeneratesAValidErrorMessage()
+    {
+        $this->element->setValue(array());
+        $this->element->addErrorMessage('Invalid value entered');
+        $this->element->markAsError();
+        $messages = $this->element->getMessages();
+        $this->assertEquals('Invalid value entered', array_shift($messages));
     }
 }
 
