@@ -19,7 +19,7 @@
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
  * @version    $Id$
  */
-use Illuminate\Container\Container;
+use Illuminate\Contracts\Container\Container;
 
 
 /** Zend_Loader */
