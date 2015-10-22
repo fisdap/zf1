@@ -115,7 +115,6 @@ abstract class Zend_Controller_Action implements Zend_Controller_Action_Interfac
      *
      * Called from Zend_Controller_Dispatcher_Standard::getController as final step of object instantiation.
      *
-     * @deprecated You can just use the constructor now
      * @return void
      */
     public function init()
